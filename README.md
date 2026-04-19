@@ -23,6 +23,7 @@ Marketing Manager who receives a prioritized customer list for email/SMS retenti
 #### Practical Use
 Marketing team imports the "High-Value Customer List" CSV into their CRM/email platform to execute personalized discount campaigns, expecting 15-25% uplift in repeat purchase rate within 90 days.
 
+## TASK 2: BIG DATA ARCHITECTURE DESIGN 
 
 ### 2.1 Architecture Diagram
 ![Architecture Diagram](diagram/diagram.png)
