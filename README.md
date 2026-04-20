@@ -63,3 +63,51 @@ Justification: CSV/Excel universally compatible with CRM tools, with no cloud de
 ### Conclusion
 The pipeline is achieved 100% locally on-device, with all components running on a singl MacBook Pro. No intenet connection, cloud resources, and no local servers are required. All of the tooling used is open-source and requires zero extra funds or budget. One Jupyter notebook orchestrates everything.
 
+## Task 3: Data Processing Strategy
+### 3.1 Batch Processing Strategy
+#### i. Historical data used
+All transactions in the file online_retail_II.xlsx is used, spanning the full time range of InvoiceDate (historical snapshot of customer behavior).
+
+#### ii. Computation performed
+
+```
+# Complete RFM Batch Job
+from pyspark.sql.functions import *
+from pyspark.sql.window import Window
+from pyspark.ml.feature import StandardScaler, VectorAssembler
+from pyspark.ml.clustering import KMeans
+
+# RFM Calculation (Historical Analysis)
+rfm = (df
+    .filter(col("CustomerID").isNotNull())
+    .groupBy("CustomerID", "Country")
+    .agg(
+        datediff(max("InvoiceDate"), current_date()).alias("Recency"),  # Days since last purchase
+        countDistinct("InvoiceNo").alias("Frequency"),                  # Unique invoices
+        round(sum(col("Quantity") * col("Price")), 2).alias("Monetary") # Total spend
+    )
+)
+
+# K-Means Clustering on RFM features
+assembler = VectorAssembler(inputCols=["Recency", "Frequency", "Monetary"], outputCol="features")
+scaler = StandardScaler(inputCol="features", outputCol="scaledFeatures")
+kmeans = KMeans(k=5, seed=42)
+
+# Pipeline execution
+scaled_rfm = scaler.fit(assembler.transform(rfm)).transform(assembler.transform(rfm))
+clusters = kmeans.fit(scaled_rfm)
+rfm_segments = clusters.transform(scaled_rfm)
+
+# Export High-Value Segment
+high_value = rfm_segments.filter(col("prediction") == 0)  # High-value cluster
+high_value.select("CustomerID", "Country", "Recency", "Frequency", "Monetary").coalesce(1).write.csv("high_value_customers.csv")
+```
+
+#### iii. Why batch processing is appropriate or inappropriate
+Batch processing is more appropriate for this scenario because:
+- Historical RFM analysis requires complete dataset, without partial updates.
+- Customer segmentation is computed weekly/monthly, and not in real-time.
+- Considering the single laptop constraint, batch processing maximizes the resource utilization.
+- Batch processing is offline-first, requiring no streaming infrastructure, thus saving costs.
+- It is okay in the context of a marketing campaign to use static lists (CSV export), and not live updates.
+
