@@ -4,7 +4,7 @@
 Identify high-value customers for targeted retention marketing to maximize revenue from the company's most profitable customer segments, addressing the challenge of limited marketing budget in a resource-constrained e-commerce environment.
 
 ### 1.2 Analytical Question
-"Which customers exhibit high-value purchasing behavior (defined by RFM metrics: Recency, Frequency, Monetary value) and can be grouped into distinct segments for prioritized marketing campaigns, using only transactional data from Invoice, Customer ID, InvoiceDate, Quantity, and Price columns?"
+"Which customers exhibit high-value purchasing behavior (defined by Recency, Frequency, Monetary value) and can be grouped into distinct segments for prioritized marketing campaigns, using only transactional data from Invoice, Customer ID, InvoiceDate, Quantity, and Price columns?"
 
 ### 1.3 Expected Outcomes
 #### Deliverables
