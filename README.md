@@ -149,7 +149,8 @@ In the end, streaming processing is not suited to this scenario for the followin
 | Dimension | Batch (Chosen) | Streaming (Not Chosen) |
 |----------|----------|----------|
 | Latency   | Weekly updates are acceptable in this context | Milliseconds, which is overkill for this context  |
-| Cost   | $0  | $0, but likely unreliable  |
+| Cost   | $0  | $0, but unlikely to be eliable at this price point |
 | Complexity | Simple, requiring a single python notebook | Complex, potentially requiring multiple cloud services |
+| Accuracy |  |  |
 
 For our chosen scenario, RFM segmentation requires a complete historical context, and our Marketing Manager needs customer lists weekly, rather than live updates. Batch processing delivers identical business value with far less complexity on our single MacBook Pro setup. Therefore, batch processing is the better approach, than streaming.
