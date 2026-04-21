@@ -111,6 +111,39 @@ Batch processing is more appropriate for this scenario because:
 - Batch processing is offline-first, requiring no streaming infrastructure, thus saving costs.
 - It is okay in the context of a marketing campaign to use static lists (CSV export), and not live updates.
 
+#### iv. Streaming processing
+Streaming processing is not implemented, but rather simulated in this section. For this approach, the input stream are new transactions, recorded to a directory we shall call `data/streaming/`. The output is a live updating customer segment dashboard, as well as any supporting details that the Marketing Manager would require, for example, a CSV of the top segment to target for marketing activity.
+
+##### Simulated streaming code
+```
+# Simulated Structured Streaming (new transactions folder)
+streaming_df = (spark
+    .readStream
+    .format("csv")
+    .option("header", "true")
+    .schema(existing_schema)  # From batch job
+    .load("data/streaming/")
+)
+
+# Live RFM updates (windowed aggregation)
+rfm_stream = (streaming_df
+    .filter(col("CustomerID").isNotNull())
+    .groupBy("CustomerID", window("InvoiceDate", "1 day"))
+    .agg(sum(col("Quantity") * col("Price")).alias("Monetary"))
+)
+
+query = (rfm_stream
+    .writeStream
+    .outputMode("complete")
+    .format("console")
+    .start())
+```
+
+In the end, streaming processing is not suited to this scenario for the following reasons:
+- There is no requirement for real time data, as the marketing team only requires weekly updates and sufficient time between updates to target customers and implement a marketing strategy.
+- Considering that there is an infrastructure limitation (only a single laptop is available), we cannot use modern streaming tools such as Kafka or Flume.
+- There is a further constraint, in the form of the requirement to perform the analysis and segmentation in an offline environment on the laptop. In this scenario, streaming processing is not a realistic choice.
+
 ### 3.2 Trade-off Analysis
 
 | Dimension | Batch (Chosen) | Streaming (Not Chosen) |
