@@ -63,7 +63,7 @@ Justification: MLlib included in PySpark—no extra installs. Scales to full dat
 ### Serving Layer
 Tools: Excel files written via PySpark
 Processing mode: Batch
-Role: Delivers "High-Value Customer List" and segment report to Marketing Manager. The file contains one row per customer with their RFM scores and segment label. 
+Role: Delivers segments of interest to the Marketing Manager including the top segment “Champions” for targeted marketing campaigns. The file contains one row per customer with their RFM scores and segment label. 
 Justification: Excel is used universally and is compatible with CRM tools, with no cloud dependency.
 
 ### Conclusion
