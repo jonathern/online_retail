@@ -29,21 +29,26 @@ Marketing team imports the "High-Value Customer List" CSV into their CRM/email p
 ![Architecture Diagram](diagram/diagram.png)
 
 ### 2.2 Layer Architecture Description and Justification
-The complete architecture is batch, on-premise, and depends on open-source tooling.
+The complete architecture is batch, on-premise, and depends on open-source tooling. All processing runs on a Macbook with no internet dependency.
 #### Raw Data Layer
 Tools: Excel (.xlsx), CSV files on local disk
-Role: Stores transactional data (Invoice, Customer ID, Quantity, Price, InvoiceDate, Country)
-Justification: Matches dataset description and operational constraint. Additionally, no cloud storage is needed.
+Processing Mode : Batch 
+Role: Acts as the primary cource of transactional records, storing transactional data (Invoice, Customer ID, Quantity, Price, InvoiceDate, Country)
+Justification:The source data was provided in Excel format, no cloud storage is needed. No transformation of the source format is needed at this layer. Keeping raw files untouched preserves an audit trail and allows full re-runs from the original data at any point.
 
 ### Ingestion Layer
 Tools: pandas.read_excel() + openpyxl, spark.createDataFrame()
-Role: Converts Excel/CSV → PySpark DataFrame with schema inference and basic validation
-Justification: Proven working in the local environment.
+Role: Reads raw Excel and CSV files from disk and converts them into a PySpark DataFrame. Basic schema inference runs at this stage, and rows with malformed date fields or missing critical columns are logged and dropped before passing downstream.
+Justification: Pandas handles Excel parsing reliably since PySpark has no native Excel reader without additional plugins. The DataFrame is handed to Spark immediately after loading to avoid keeping large data in Pandas memory longer than necessary. For this dataset size, the Pandas-to-Spark handoff stays within single-node memory limits. If the dataset grows beyond available RAM, this layer would need replacing with a direct Spark CSV reader or a dedicated Excel-to-Parquet conversion step first.
 
-### Pre-Processin Layer
-Tools: PySpark (SparkSession), Jupyter Notebook, Python
-Role: Executes RFM calculations (Recency=days since last purchase, Frequency=invoice count, Monetary=total spend), data cleaning (null CustomerID removal), feature scaling
-Justification: Single-node PySpark handles 500K+ transaction rows on-device. 
+### Pre-Processing Layer
+Tools: Python (language),PySpark(processing framework), Jupyter Notebook(execution environment), 
+Processing mode: Batch
+Role: This layer handles four sequential operations. First, data cleaning removes duplicate rows and filters out Nulls from Customer ID, Quantity, Price, and drops rows where Quantity or Price are zero or negative. 
+Second, RFM feature engineering computes Recency (days since last purchase relative to the most recent date in the dataset), Frequency (count of distinct invoices per customer), and Monetary (sum of Quantity multiplied by Price per customer). Customers with no purchase activity in the last 365 days are excluded at this stage. 
+Third, outlier detection converts the RFM table to Pandas, applies IQR bounds independently across Recency, Frequency, and Monetary, and removes customers falling outside those bounds before converting back to a Spark DataFrame. 
+Fourth, feature assembly and scaling use VectorAssembler to combine the three RFM columns into a single feature vector, then StandardScaler normalises the vector to prevent high Monetary values from distorting KMeans distance calculations.
+Justification: Separating cleaning, feature engineering, outlier removal, and scaling as distinct sequential steps makes each independently testable and reproducible. The IQR method was chosen for outlier removal because it is non-parametric and does not assume a normal distribution, which RFM data rarely follows. Converting to Pandas for IQR is acceptable at this dataset size since the RFM table holds one row per customer, not one row per transaction.
 
 ### Storage Layer
 Tools: Parquet files, SQLite
@@ -56,10 +61,11 @@ Role: K-means clustering on RFM features, silhouette score validation, segment p
 Justification: MLlib included in PySpark—no extra installs. Scales to full dataset while running locally.
 
 ### Serving Layer
-Tools: CSV export, Excel export for marketing team
-Role: Delivers "High-Value Customer List" and segment report to Marketing Manager
-Justification: CSV/Excel universally compatible with CRM tools, with no cloud dependency.
+Tools: Excel files written via PySpark
+Processing mode: Batch
+Role: Delivers "High-Value Customer List" and segment report to Marketing Manager. The file contains one row per customer with their RFM scores and segment label. 
+Justification: Excel is used universally and is compatible with CRM tools, with no cloud dependency.
 
 ### Conclusion
-The pipeline is achieved 100% locally on-device, with all components running on a singl MacBook Pro. No intenet connection, cloud resources, and no local servers are required. All of the tooling used is open-source and requires zero extra funds or budget. One Jupyter notebook orchestrates everything.
+The pipeline is achieved 100% locally on-device, with all components running on a single MacBook Pro. No intenet connection, cloud resources, and no local servers are required. All of the tooling used is open-source and requires zero extra funds or budget. One Jupyter notebook orchestrates everything.
 
