@@ -1,0 +1,8 @@
+{
+  "timestamp": "20260422_171806",
+  "total_raw_rows": 525461,
+  "cleaned_rows": 504731,
+  "rfm_customers": 3717,
+  "final_customers": 3717,
+  "best_k": 3
+}
