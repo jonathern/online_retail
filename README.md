@@ -154,3 +154,5 @@ In the end, streaming processing is not suited to this scenario for the followin
 | Accuracy |  |  |
 
 For our chosen scenario, RFM segmentation requires a complete historical context, and our Marketing Manager needs customer lists weekly, rather than live updates. Batch processing delivers identical business value with far less complexity on our single MacBook Pro setup. Therefore, batch processing is the better approach, than streaming.
+
+## Task 4: 
