@@ -44,14 +44,17 @@ Justification: Pandas handles Excel parsing reliably since PySpark has no native
 ### Pre-Processing Layer
 Tools: Python (language),PySpark(processing framework), Jupyter Notebook(execution environment), 
 Processing mode: Batch
+
 Role: This layer handles four sequential operations. First, data cleaning removes duplicate rows and filters out Nulls from Customer ID, Quantity, Price, and drops rows where Quantity or Price are zero or negative. 
 Second, RFM feature engineering computes Recency (days since last purchase relative to the most recent date in the dataset), Frequency (count of distinct invoices per customer), and Monetary (sum of Quantity multiplied by Price per customer). Customers with no purchase activity in the last 365 days are excluded at this stage. 
 Third, outlier detection converts the RFM table to Pandas, applies IQR bounds independently across Recency, Frequency, and Monetary, and removes customers falling outside those bounds before converting back to a Spark DataFrame. 
 Fourth, feature assembly and scaling use VectorAssembler to combine the three RFM columns into a single feature vector, then StandardScaler normalises the vector to prevent high Monetary values from distorting KMeans distance calculations.
+
 Justification: Separating cleaning, feature engineering, outlier removal, and scaling as distinct sequential steps makes each independently testable and reproducible. The IQR method was chosen for outlier removal because it is non-parametric and does not assume a normal distribution, which RFM data rarely follows. Converting to Pandas for IQR is acceptable at this dataset size since the RFM table holds one row per customer, not one row per transaction.
 
 ### Storage Layer
 Tools: Parquet files, SQLite
+
 Role: Persists raw data, RFM features, and final customer segments for later audit/re-run, or analysis further down the line.
 Justification: Parquet files feature better compression compared to CSV, while SQLite offers lightweight relational store for segment lookup.
 
